@@ -1,0 +1,20 @@
+﻿@inherits LayoutComponentBase
+
+@using BlazorPro.BlazorSize
+
+@code {
+    private bool _hideSearchBox = false;
+    private SideBar _sideBar;
+}
+
+<MediaQueryList>
+    <MediaQuery Media="@Breakpoints.SmallDown" @bind-Matches="_hideSearchBox" />
+
+    <TopBar HideSearchBox="_hideSearchBox" ToggleSideBar="() => _sideBar.ToggleSideBar()" />
+    <div style="white-space:nowrap;">
+        <SideBar @ref="_sideBar" ShowSearchBox="_hideSearchBox" />
+        <main role="main" class="m-2" style="display:inline-block">
+            @Body
+        </main>
+    </div>
+</MediaQueryList>

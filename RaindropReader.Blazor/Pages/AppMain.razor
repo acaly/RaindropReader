@@ -1,0 +1,11 @@
+﻿@attribute [Route(Startup.AppRoute)]
+@attribute [Route(Startup.AppItemRoute)]
+@using RaindropReader.Shared.Components;
+
+<h3>App @Item</h3>
+<MainViewComponent />
+
+@code {
+    [Parameter]
+    public string Item { get; set; }
+}

@@ -1,0 +1,179 @@
+﻿@using BlazorPro.BlazorSize
+@using Microsoft.AspNetCore.Components.Web
+@using Majorsoft.Blazor.Components.Common.JsInterop.Click
+@using RaindropReader.Shared.Services
+
+@inject IClickBoundariesHandler _clickHandler
+@inject ReaderService _reader
+
+@code {
+
+    [Parameter]
+    public bool ShowSearchBox { get; set; }
+
+    private ElementReference _sideBarDiv;
+
+    private bool _sideBarCollapsed = true;
+    private bool _fullWidthSideBar = false;
+
+    private bool _isFirstOutside = false;
+    private bool _isToggledByHover = false;
+
+    private bool _cancelHover;
+    private bool _cancelLeave;
+
+    public void ToggleSideBar()
+    {
+        _sideBarCollapsed = !_sideBarCollapsed;
+        _isFirstOutside = true;
+        _isToggledByHover = false;
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await RegisterSideBarClickHandler();
+    }
+
+    private async Task RegisterSideBarClickHandler()
+    {
+        await _clickHandler.RegisterClickBoundariesAsync(_sideBarDiv,
+            insideClickCallback: SideBar_InsideClick,
+            outsideClickCallback: SideBar_OutsideClick);
+    }
+
+    private Task SideBar_InsideClick(MouseEventArgs e)
+    {
+        if (_sideBarCollapsed)
+        {
+            _sideBarCollapsed = false;
+            _isFirstOutside = false;
+            StateHasChanged();
+        }
+        _isToggledByHover = false;
+        return Task.CompletedTask;
+    }
+
+    private Task SideBar_OutsideClick(MouseEventArgs e)
+    {
+        if (!_sideBarCollapsed && !_isFirstOutside)
+        {
+            _sideBarCollapsed = true;
+            StateHasChanged();
+        }
+        _isFirstOutside = false;
+        return Task.CompletedTask;
+    }
+
+    private async Task SideBar_MouseHover(MouseEventArgs e)
+    {
+        _cancelLeave = true;
+        _cancelHover = false;
+
+        await Task.Delay(100);
+
+        if (!_cancelHover && _sideBarCollapsed)
+        {
+            _sideBarCollapsed = false;
+            _isFirstOutside = false;
+            _isToggledByHover = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SideBar_MouseLeave(MouseEventArgs e)
+    {
+        //Cancel the waiting task.
+        _cancelHover = true;
+        _cancelLeave = false;
+
+
+        //Also close the sidebar if it was not opened by clicking toggle button.
+        //We have to wait for a short time (for the next hover event, if any),
+        //because the UI triggers leave before hover.
+        await Task.Delay(200);
+
+        if (!_cancelLeave && !_sideBarCollapsed && _isToggledByHover)
+        {
+            _sideBarCollapsed = true;
+            _isFirstOutside = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SideBar_ElementClick()
+    {
+        if (_fullWidthSideBar)
+        {
+            //Under full-width state, we directly collapse the side bar to show content.
+
+            await Task.Delay(100);
+            _sideBarCollapsed = true;
+            _isFirstOutside = false;
+            StateHasChanged();
+        }
+        else
+        {
+            //Otherwise only set _isToggledByHover to true.
+            var shouldReset = !_sideBarCollapsed;
+            if (shouldReset)
+            {
+                _isToggledByHover = true;
+            }
+            await Task.Delay(100);
+            if (shouldReset)
+            {
+                _isToggledByHover = true;
+            }
+        }
+    }
+}
+
+@{
+    (string collapsed, string expanded) sideBarWidths = _fullWidthSideBar ? ("0", "100%") : ("50px", "300px");
+    var sideBarWidth = _sideBarCollapsed ? sideBarWidths.collapsed : sideBarWidths.expanded;
+    //TODO the styles in the following div depending on collapsed state should be changed to css conditionals
+}
+
+<MediaQuery Media="@Breakpoints.XSmallDown" @bind-Matches="_fullWidthSideBar" />
+<div class=""
+     style="position:fixed;width:@sideBarWidth;top:50px;bottom:0;border-right:@(_fullWidthSideBar ? "none" : "1px solid black");transition:width 0.2s;background:white;padding:@(_fullWidthSideBar ? "0" : "5px");overflow-x:hidden"
+     @ref="_sideBarDiv"
+     @onmouseover="SideBar_MouseHover" @onmouseout="SideBar_MouseLeave">
+
+    <!-- search box (when not shown in navbar) -->
+    @if (ShowSearchBox)
+    {
+        <div class="" style="width:100%;min-width:200px">
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <button class="btn btn-outline-secondary" type="button" style="border:none;border-radius:0 0">
+                        <span class="oi oi-magnifying-glass"></span>
+                    </button>
+                </div>
+                <input style="opacity:@(_sideBarCollapsed?"0":"1");transition:opacity 0.2s;border:none;border-radius:0 0"
+                       type="text" class="form-control" placeholder="Search" />
+            </div>
+        </div>
+        <hr style="margin:2px" />
+    }
+
+    <!-- side bar content -->
+    @foreach (var element in _reader.GetSideBarElements())
+    {
+        async Task ClickEvent(MouseEventArgs e)
+        {
+            StateHasChanged();
+            element.Click();
+            await SideBar_ElementClick();
+        }
+        <div class="" style="width:100%;min-width:200px;overflow:hidden">
+            <a class="btn" @onclick="ClickEvent">
+                <span class="oi oi-@element.Icon mr-2"></span>
+                <span style="opacity:@(_sideBarCollapsed?"0":"1");transition:opacity 0.2s">@element.Text (@element.ClickCount)</span>
+            </a>
+        </div>
+    }
+</div>
+<div class="" style="height:1px;width:@sideBarWidths.collapsed;display:inline-block">
+</div>

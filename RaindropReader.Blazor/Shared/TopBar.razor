@@ -1,0 +1,48 @@
+﻿@using Microsoft.AspNetCore.Components.Web
+
+@code {
+    [Parameter]
+    public bool HideSearchBox { get; set; }
+
+    [Parameter]
+    public Action ToggleSideBar { get; set; }
+}
+
+<div style="position:fixed;left:0;right:0;top:0;height:50px;background:white;white-space:nowrap;">
+    <div class="row" style="background:lightgray;border-bottom:1px solid black;padding:5px;min-width:320px">
+        <div class="col-auto" style="padding-right:5px">
+            <button class="btn" @onclick="ToggleSideBar">
+                <span class="oi oi-menu"></span>
+            </button>
+        </div>
+
+        <div class="col-auto align-self-center" style="padding:0">
+            <h4 style="margin:0">
+                Raindrop Reader
+            </h4>
+        </div>
+
+        <!-- search box (hidden when too narrow) -->
+        @if (!HideSearchBox)
+        {
+            <div class="col-auto" style="width:500px;max-width:50%;margin-left:20px">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search feeds" />
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button">
+                            <span class="oi oi-magnifying-glass"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- settings button -->
+        <div class="col-auto ml-auto" style="padding-left:0">
+            <button class="btn">
+                <span class="oi oi-cog"></span>
+            </button>
+        </div>
+    </div>
+</div>
+<div style="width:1px;height:50px"></div>
