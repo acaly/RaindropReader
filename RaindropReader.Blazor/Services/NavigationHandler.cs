@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace RaindropReader.Blazor.Services
 {
-    internal class NavigationHandler : INavigationHandler
+    internal sealed class NavigationHandler : INavigationHandler
     {
         private readonly IJSRuntime _jsRuntime;
 

@@ -52,19 +52,28 @@ namespace RaindropReader.Blazor
             }
 
             app.UseHttpsRedirection();
+
+            //Framework-defined static files.
             app.UseStaticFiles();
+
+            //Dynamic style sheets from plugins.
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                FileProvider = new DynamicStyleSheetsProvider(),
+            });
 
             app.UseRouting();
 
             app.UseEndpoints(endpoints =>
             {
-                //Redirect from "/" to "/app".
+                //Redirect from / to /app (for the blazor app).
                 endpoints.MapGet("/", context =>
                 {
                     context.Response.Redirect(AppRoute);
                     return Task.CompletedTask;
                 });
 
+                //Route for the blazor app.
                 endpoints.MapBlazorHub();
                 endpoints.MapFallbackToPage("/_Host"); //TODO don't add as fallback
             });
