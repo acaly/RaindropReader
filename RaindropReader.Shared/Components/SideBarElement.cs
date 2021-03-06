@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RaindropReader.Shared.Services;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,22 +16,23 @@ namespace RaindropReader.Shared.Components
 
     public sealed class SideBarElement
     {
+        public ReaderService ReaderService { get; init; }
         public SideBarElementType Type { get; init; }
         public int Indent { get; init; }
         public string Text { get; init; }
         public string Icon { get; init; }
 
-        public int ClickCount { get; private set; }
+        public string NewTabGuid { get; init; }
+        public string LinkAddress { get; init; }
 
         public IEnumerable<SideBarElement> GetChildren()
         {
             throw new NotImplementedException();
         }
 
-        public void Click()
+        public void OpenLink()
         {
-            //TODO
-            ClickCount += 1;
+            ReaderService.OpenTab(NewTabGuid);
         }
     }
 }

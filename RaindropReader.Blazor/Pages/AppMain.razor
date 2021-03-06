@@ -1,11 +1,30 @@
 ﻿@attribute [Route(Startup.AppRoute)]
 @attribute [Route(Startup.AppItemRoute)]
-@using RaindropReader.Shared.Components;
+@using RaindropReader.Shared.Services
+@using RaindropReader.Shared.Components 
 
-<h3>App @Item</h3>
-<MainViewComponent />
+@inject ReaderService _readerService
 
 @code {
     [Parameter]
     public string Item { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrWhiteSpace(Item))
+        {
+            _readerService.HandleItemRoute(Item);
+        }
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return Task.CompletedTask;
+        }
+        return _readerService.InitJsAsync();
+    }
 }
+
+<MainViewComponent />

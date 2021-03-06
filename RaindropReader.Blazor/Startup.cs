@@ -59,6 +59,7 @@ namespace RaindropReader.Blazor
             //Dynamic style sheets from plugins.
             app.UseStaticFiles(new StaticFileOptions
             {
+                //TODO add relative path
                 FileProvider = new DynamicStyleSheetsProvider(),
             });
 

@@ -1,4 +1,6 @@
-﻿<h3>MainComponent</h3>
+﻿@using RaindropReader.Shared.Services
+
+@inject ReaderService _readerService
 
 @code {
     //TODO
@@ -12,4 +14,31 @@
     //TODO
     //add 404 handling
     //change routes
+
+    protected override void OnInitialized()
+    {
+        _readerService.UpdateTabContainer += StateHasChanged;
+        base.OnInitialized();
+    }
 }
+
+<TabHeaderComponent />
+
+<div class="row">
+    @foreach (var tab in _readerService.GetTabs())
+    {
+        <div class="col-12" style="@(tab.IsSelected ? "" : "display:none")">
+            <div class="p-2">
+                @switch (tab)
+                {
+                case ItemTab itemTab:
+                    <ItemTabComponent Item="itemTab" />
+                    break;
+                case ListTab listTab:
+                    <ListTabComponent List="listTab" />
+                    break;
+                }
+            </div>
+        </div>
+    }
+</div>

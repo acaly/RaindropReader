@@ -5,8 +5,12 @@
 
 @inject IClickBoundariesHandler _clickHandler
 @inject ReaderService _reader
-
 @code {
+    protected override void OnInitialized()
+    {
+        _reader.UpdateSideBar += StateHasChanged;
+        base.OnInitialized();
+    }
 
     [Parameter]
     public bool ShowSearchBox { get; set; }
@@ -137,10 +141,10 @@
 
 <MediaQuery Media="@Breakpoints.XSmallDown" @bind-Matches="_fullWidthSideBar" />
 <div class=""
-     style="position:fixed;width:@sideBarWidth;top:50px;bottom:0;border-right:@(_fullWidthSideBar ? "none" : "1px solid black");transition:width 0.2s;background:white;padding:@(_fullWidthSideBar ? "0" : "5px");overflow-x:hidden"
+     style="position:fixed;width:@sideBarWidth;top:50px;bottom:0;border-right:@(_fullWidthSideBar ? "none" : "1px solid black");transition:width 0.2s;background:white;padding:@(_fullWidthSideBar ? "0" : "5px");overflow-x:hidden;z-index:10"
      @ref="_sideBarDiv"
      @onmouseover="SideBar_MouseHover" @onmouseout="SideBar_MouseLeave">
-
+    
     <!-- search box (when not shown in navbar) -->
     @if (ShowSearchBox)
     {
@@ -163,17 +167,16 @@
     {
         async Task ClickEvent(MouseEventArgs e)
         {
-            StateHasChanged();
-            element.Click();
+            element.OpenLink();
             await SideBar_ElementClick();
         }
         <div class="" style="width:100%;min-width:200px;overflow:hidden">
-            <a class="btn" @onclick="ClickEvent">
+            <a class="btn" @onclick="ClickEvent" href="@element.LinkAddress">
                 <span class="oi oi-@element.Icon mr-2"></span>
-                <span style="opacity:@(_sideBarCollapsed?"0":"1");transition:opacity 0.2s">@element.Text (@element.ClickCount)</span>
+                <span style="opacity:@(_sideBarCollapsed?"0":"1");transition:opacity 0.2s">@element.Text</span>
             </a>
         </div>
     }
 </div>
-<div class="" style="height:1px;width:@sideBarWidths.collapsed;display:inline-block">
+<div class="" style="height:1px;width:@sideBarWidths.collapsed;float:left">
 </div>
