@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RaindropReader.Blazor.Services;
-using RaindropReader.Shared.Services;
+using RaindropReader.Shared.Services.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;

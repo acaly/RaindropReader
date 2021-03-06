@@ -1,7 +1,7 @@
 ﻿@using BlazorPro.BlazorSize
 @using Microsoft.AspNetCore.Components.Web
 @using Majorsoft.Blazor.Components.Common.JsInterop.Click
-@using RaindropReader.Shared.Services
+@using RaindropReader.Shared.Services.Client
 
 @inject IClickBoundariesHandler _clickHandler
 @inject ReaderService _reader
@@ -90,7 +90,6 @@
         //Cancel the waiting task.
         _cancelHover = true;
         _cancelLeave = false;
-
 
         //Also close the sidebar if it was not opened by clicking toggle button.
         //We have to wait for a short time (for the next hover event, if any),

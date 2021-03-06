@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RaindropReader.Shared.Services
+namespace RaindropReader.Shared.Services.Storage
 {
     /// <summary>
     /// A context to read and write a user's config. The instance of this class

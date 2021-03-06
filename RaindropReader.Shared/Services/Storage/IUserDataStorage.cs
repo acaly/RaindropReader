@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RaindropReader.Shared.Services
+namespace RaindropReader.Shared.Services.Storage
 {
     /// <summary>
     /// The service that provides storage of feed data. This class is not shared
@@ -69,11 +69,13 @@ namespace RaindropReader.Shared.Services
         /// will be blocked. All modifications of the storage must be protected
         /// by this lock. The modifications are submitted when the lock is released.
         /// </summary>
+        /// <param name="timeout">Maximum wait time for the lock, in ms.</param>
         /// <returns>
         /// The task that returns the IDisposable, which should be disposed after 
-        /// modification.
+        /// modification. If the storage is currently locked by another client,
+        /// and the timeout has exceeded, the task returns null.
         /// </returns>
-        Task<IDisposable> LockStorageAsync();
+        Task<IDisposable> LockStorageAsync(int timeout);
 
         /// <summary>
         /// Create an observable instance that can raise events when items in

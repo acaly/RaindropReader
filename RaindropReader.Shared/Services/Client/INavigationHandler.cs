@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RaindropReader.Shared.Services
+namespace RaindropReader.Shared.Services.Client
 {
     /// <summary>
     /// Scoped service to be implemented by the app to help the component

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RaindropReader.Shared.Services
+namespace RaindropReader.Shared.Services.Storage
 {
     /// <summary>
     /// Represent a version of a feed item. This class is immutable.

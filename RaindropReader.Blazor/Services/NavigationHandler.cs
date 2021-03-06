@@ -1,5 +1,5 @@
 ﻿using Microsoft.JSInterop;
-using RaindropReader.Shared.Services;
+using RaindropReader.Shared.Services.Client;
 using System;
 using System.Collections.Generic;
 using System.Linq;

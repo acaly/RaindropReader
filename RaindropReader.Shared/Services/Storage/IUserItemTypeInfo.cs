@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RaindropReader.Shared.Services
+namespace RaindropReader.Shared.Services.Storage
 {
     /// <summary>
     /// Represent a type of a user. Unlike Item, this class is not

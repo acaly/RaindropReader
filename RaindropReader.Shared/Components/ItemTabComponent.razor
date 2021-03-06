@@ -2,6 +2,12 @@
 @code {
     [Parameter]
     public ItemTab Item { get; set; }
+
+    protected override bool ShouldRender()
+    {
+        //TODO eliminate unnecessary rendering
+        return base.ShouldRender();
+    }
 }
 
 <div>
