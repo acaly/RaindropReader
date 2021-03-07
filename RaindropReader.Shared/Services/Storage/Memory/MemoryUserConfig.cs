@@ -169,16 +169,34 @@ namespace RaindropReader.Shared.Services.Storage.Memory
 
         public int GetItems(IUserItemType type, DateTime fromTime, int limit, List<Item> receiveBuffer)
         {
-            int count = 0;
+            //Note that this implementation is not optimized. Memory storage is only for debugging purpose.
+
+            receiveBuffer ??= new();
+
             foreach (var versionGuid in _itemVersions.Values)
             {
                 if (_data.TryGetValue(versionGuid, out var item) && item.ItemType == type && item.IsValid)
                 {
                     receiveBuffer?.Add(item);
-                    count += 1;
                 }
             }
-            return count;
+            
+            //Sort by timestamp in reversed order.
+            receiveBuffer.Sort((i1, i2) => i1.Timestamp < i2.Timestamp ? 1 : -1);
+
+            //Remove older versions.
+            var addedItems = new HashSet<Guid>();
+            for (int i = 0; i < receiveBuffer.Count; ++i)
+            {
+                if (!addedItems.Add(receiveBuffer[i].ItemGuid))
+                {
+                    receiveBuffer.RemoveAt(i);
+                    i -= 1;
+                }
+            }
+            receiveBuffer.RemoveRange(limit, receiveBuffer.Count - limit);
+
+            return receiveBuffer.Count;
         }
 
         public Task<int> GetItemsAsync(IUserItemType type, DateTime fromTime, int limit, List<Item> receiveBuffer)
