@@ -11,45 +11,77 @@ namespace RaindropReader.Shared.Services.Plugins
     /// <summary>
     /// Part of the ReaderService that manages plugins.
     /// </summary>
-    public sealed class PluginManager
+    public sealed class PluginManager : IDisposable
     {
+        private readonly Guid _systemPluginGuid = Guid.NewGuid();
+
+        private bool _disposed = false;
+
+        internal ReaderService ReaderService { get; }
+        internal SystemPlugin SystemPlugin { get; private set; }
+
         private readonly List<IPluginProvider> _providers = new();
         private readonly Dictionary<Guid, PluginHandlerRegistry> _loadedPlugins = new();
-        private readonly ReaderService _readerService;
         private IUserItemType _pluginType;
 
         internal PluginManager(ReaderService readerService)
         {
-            _readerService = readerService;
+            ReaderService = readerService;
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            foreach (var plugin in _loadedPlugins.Values)
+            {
+                plugin.Unload();
+            }
+            _loadedPlugins.Clear();
         }
 
         //Basic API.
 
         public void AddPluginProvider(IPluginProvider pluginProvider)
         {
-            lock (this)
+            if (_disposed)
             {
-                _providers.Add(pluginProvider);
+                throw new ObjectDisposedException(nameof(PluginManager));
             }
+            _providers.Add(pluginProvider);
         }
 
-        internal void LoadPlugin(Guid instanceGuid, UserPluginInstanceInfo info, bool overwriteExisting)
+        internal async Task LoadPluginAsync(Guid instanceGuid, UserPluginInstanceInfo info, bool overwriteExisting)
         {
-            lock (this)
+            if (_disposed)
             {
-                //Check existing.
-                if (_loadedPlugins.TryGetValue(instanceGuid, out var existingPlugin))
+                throw new ObjectDisposedException(nameof(PluginManager));
+            }
+            //Check existing.
+            if (_loadedPlugins.TryGetValue(instanceGuid, out var existingPlugin))
+            {
+                if (overwriteExisting)
                 {
-                    if (overwriteExisting)
-                    {
-                        throw new NotImplementedException("Plugin reloading has not been implemented.");
-                    }
-                    throw new ArgumentException("Plugin with the same Guid has been loaded. " +
-                        $"Existing plugin: {existingPlugin.InstanceInfo.PluginName}. New plugin: {info.PluginName}.");
+                    throw new NotImplementedException("Plugin reloading has not been implemented.");
                 }
+                throw new ArgumentException("Plugin with the same Guid has been loaded. " +
+                    $"Existing plugin: {existingPlugin.InstanceInfo.PluginName}. New plugin: {info.PluginName}.");
+            }
 
-                //Get the IPlugin interface instance.
-                IPlugin pluginInstance = null;
+            //Get the IPlugin interface instance.
+            IPlugin pluginInstance = null;
+            if (info.PluginName is null && SystemPlugin is null)
+            {
+                //System plugin uses null as name (only loaded by PluginManager).
+                SystemPlugin = new SystemPlugin();
+                pluginInstance = SystemPlugin;
+            }
+            else
+            {
                 foreach (var provider in _providers)
                 {
                     var instance = provider.CreatePlugin(info.PluginName);
@@ -63,36 +95,51 @@ namespace RaindropReader.Shared.Services.Plugins
                 {
                     throw new Exception($"Cannot found plugin name {info.PluginName}.");
                 }
-
-                //Load the plugin.
-                pluginInstance.Init(info.PluginParameters);
-                var reg = new PluginHandlerRegistry()
-                {
-                    InstanceInfo = info,
-                };
-                pluginInstance.Load(reg);
-
-                //Add to list.
-                _loadedPlugins.Add(instanceGuid, reg);
             }
+
+            //Load the plugin.
+            pluginInstance.Init(info.PluginParameters);
+            var reg = new PluginHandlerRegistry()
+            {
+                InstanceInfo = info,
+                Owner = this,
+            };
+            await pluginInstance.LoadAsync(reg);
+
+            //Add to list.
+            _loadedPlugins.Add(instanceGuid, reg);
         }
 
         internal void UnloadPlugin(Guid instanceGuid)
         {
-            lock (this)
+            if (_disposed)
             {
-                if (_loadedPlugins.Remove(instanceGuid, out var pluginReg))
-                {
-                    pluginReg.Unload();
-                }
+                throw new ObjectDisposedException(nameof(PluginManager));
+            }
+            if (instanceGuid == _systemPluginGuid)
+            {
+                throw new InvalidOperationException("System plugin cannot be unloaded.");
+            }
+            if (_loadedPlugins.Remove(instanceGuid, out var pluginReg))
+            {
+                pluginReg.Unload();
             }
         }
 
         //Reader client integration.
 
-        internal async Task InitUserAsync()
+        internal async Task InitAsync()
         {
-            var userConfig = _readerService.UserConfig;
+            if (_pluginType is not null)
+            {
+                throw new InvalidOperationException("InitAsync can only be called once.");
+            }
+            if (_disposed)
+            {
+                throw new ObjectDisposedException(nameof(PluginManager));
+            }
+
+            var userConfig = ReaderService.UserConfig;
             var storage = userConfig.GetSystemStorage();
 
             var existingType = userConfig.GetType(SystemTypeGuids.Plugin);
@@ -115,19 +162,23 @@ namespace RaindropReader.Shared.Services.Plugins
                 existingType = userConfig.GetType(SystemTypeGuids.Plugin);
             }
             _pluginType = existingType;
-        }
 
-        internal async Task LoadAllPluginsAsync()
-        {
+            //Load system plugin.
+            await LoadPluginAsync(_systemPluginGuid, new(), overwriteExisting: false);
+
+            //Start listen to type change event before loading anything else.
+            userConfig.BeforeTypeDelete += BeforeUserTypeDelete;
+
+            //Load all plugins.
             var itemList = new List<Item>();
-            await _readerService.UserConfig.GetSystemStorage().GetItemsAsync(_pluginType, default, -1, itemList);
+            await ReaderService.UserConfig.GetSystemStorage().GetItemsAsync(_pluginType, default, -1, itemList);
             foreach (var item in itemList)
             {
                 if (!item.IsValid) continue;
                 var pluginInfo = ItemDataHelper.FromItemData<UserPluginInstanceInfo>(item.Data);
                 try
                 {
-                    LoadPlugin(item.ItemGuid, pluginInfo, overwriteExisting: false);
+                    await LoadPluginAsync(item.ItemGuid, pluginInfo, overwriteExisting: false);
                 }
                 catch (Exception e)
                 {
@@ -137,13 +188,25 @@ namespace RaindropReader.Shared.Services.Plugins
             }
         }
 
-        public (Guid guid, UserPluginInstanceInfo info)[] GetLoadedPlugins()
+        private void BeforeUserTypeDelete(object sender, BeforeTypeDeleteEventArgs e)
         {
-            lock (this)
+            if (e.IsCancelled) return;
+            foreach (var plugin in _loadedPlugins.Values)
             {
-                return _loadedPlugins.Select(pair => (pair.Key, pair.Value.InstanceInfo)).ToArray();
+                if (plugin.ContainsType(e.TypeGuid))
+                {
+                    e.Cancel();
+                    return;
+                }
             }
         }
+
+        internal (Guid guid, PluginHandlerRegistry reg)[] GetLoadedPluginsInternal()
+        {
+            return _loadedPlugins.Select(pair => (pair.Key, pair.Value)).ToArray();
+        }
+
+        //TODO need a public API to get all loaded plugins (to show to user)
 
         public async Task<Guid> AddPluginAsync(string pluginName, string data)
         {
@@ -156,18 +219,18 @@ namespace RaindropReader.Shared.Services.Plugins
             var item = new Item(_pluginType, guid, data: info);
 
             //TODO timeout
-            using var storageLock = await _readerService.UserConfig.GetSystemStorage().LockStorageAsync(1000);
+            using var storageLock = await ReaderService.UserConfig.GetSystemStorage().LockStorageAsync(1000);
 
             //Load before modifying storage (so it will not be loaded ever if we can't load it now).
-            LoadPlugin(guid, info, overwriteExisting: false);
-            _readerService.UserConfig.GetSystemStorage().AddItemVersion(item);
+            await LoadPluginAsync(guid, info, overwriteExisting: false);
+            ReaderService.UserConfig.GetSystemStorage().AddItemVersion(item);
 
             return guid;
         }
 
         public async Task RemovePluginAsync(Guid guid)
         {
-            var storage = _readerService.UserConfig.GetSystemStorage();
+            var storage = ReaderService.UserConfig.GetSystemStorage();
 
             //TODO timeout
             using (var storageLock = await storage.LockStorageAsync(1000))

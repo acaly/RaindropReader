@@ -9,6 +9,6 @@ namespace RaindropReader.Shared.Services.Plugins
     public interface IPlugin
     {
         void Init(string optionData);
-        void Load(PluginHandlerRegistry handlerRegistry);
+        Task LoadAsync(PluginHandlerRegistry handlerRegistry);
     }
 }

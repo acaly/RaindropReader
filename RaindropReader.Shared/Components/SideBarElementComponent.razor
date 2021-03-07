@@ -1,0 +1,30 @@
+﻿
+@code {
+    [Parameter]
+    public SideBarElement Element { get; set; }
+
+    [Parameter]
+    public bool IsCollapsed { get; set; }
+
+    [Parameter]
+    public Func<Task> ElementClicked { get; set; }
+}
+
+@if (Element.Type == SideBarElementType.Normal)
+{
+    //Subscribe element change event to redraw.
+    Element.ElementChanged += StateHasChanged;
+
+    <div class="" style="width:100%;min-width:200px;overflow:hidden">
+        <a class="btn" @onclick="async () => { Element.OpenLink(); await ElementClicked(); }" href="@Element.LinkAddress">
+            <span class="oi oi-@Element.Icon mr-2"></span>
+            <span style="opacity:@(IsCollapsed ? "0" : "1");transition:opacity 0.2s">@Element.Text</span>
+        </a>
+    </div>
+
+    <!-- TODO children -->
+}
+else if (Element.Type == SideBarElementType.Separator)
+{
+    <hr style="margin:2px" />
+}

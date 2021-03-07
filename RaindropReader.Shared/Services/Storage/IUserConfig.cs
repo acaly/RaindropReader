@@ -6,6 +6,19 @@ using System.Threading.Tasks;
 
 namespace RaindropReader.Shared.Services.Storage
 {
+    public class BeforeTypeDeleteEventArgs
+    {
+        public Guid TypeGuid { get; init; }
+        public bool IsCancelled { get; private set; }
+
+        //TODO we should provide some information to the user (e.g., which plugin is
+        //using this type).
+        public void Cancel()
+        {
+            IsCancelled = true;
+        }
+    }
+
     /// <summary>
     /// A context to access a user's config (including system-defined types).
     /// A instance of this class is not thread safe and will be disposed by
@@ -43,5 +56,13 @@ namespace RaindropReader.Shared.Services.Storage
         /// <param name="typeItemGuid">GUID of the type</param>
         /// <returns></returns>
         IUserItemType GetType(Guid typeGuid);
+
+        /// <summary>
+        /// Raised before the type is deleted from local client. Plugin manager will
+        /// use this event to prevent the operation. Note that this does not work for
+        /// remote changes if the storages is shared. It is assumed that each client
+        /// implements appropriate check before deleting.
+        /// </summary>
+        event EventHandler<BeforeTypeDeleteEventArgs> BeforeTypeDelete;
     }
 }

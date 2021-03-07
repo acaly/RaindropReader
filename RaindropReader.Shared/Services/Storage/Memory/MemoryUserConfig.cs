@@ -21,6 +21,8 @@ namespace RaindropReader.Shared.Services.Storage.Memory
         private readonly MemoryUserItemType _typeType;
         private readonly ConcurrentDictionary<ChangeObservable, int> _observables = new();
 
+        public event EventHandler<BeforeTypeDeleteEventArgs> BeforeTypeDelete;
+
         public MemoryUserConfig()
         {
             //Bootstrap type.
@@ -41,6 +43,13 @@ namespace RaindropReader.Shared.Services.Storage.Memory
 
         internal bool TryDeleteType(MemoryUserItemType type)
         {
+            var e = new BeforeTypeDeleteEventArgs { TypeGuid = type.ItemGuid };
+            BeforeTypeDelete?.Invoke(this, e);
+            if (e.IsCancelled)
+            {
+                return false;
+            }
+
             foreach (var versionGuid in _itemVersions.Values)
             {
                 if (_data.TryGetValue(versionGuid, out var item) && item.ItemType == type && item.IsValid)
@@ -49,6 +58,7 @@ namespace RaindropReader.Shared.Services.Storage.Memory
                 }
             }
             //Add a deleted version. The remaining work will be handled by AddItemVersion.
+            //Caller of the delete API should acquire the lock.
             AddItemVersion(new Item(_typeType, type.ItemGuid, data: null));
             return true;
         }

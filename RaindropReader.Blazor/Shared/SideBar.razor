@@ -1,6 +1,7 @@
 ﻿@using BlazorPro.BlazorSize
 @using Microsoft.AspNetCore.Components.Web
 @using Majorsoft.Blazor.Components.Common.JsInterop.Click
+@using RaindropReader.Shared.Components
 @using RaindropReader.Shared.Services.Client
 
 @inject IClickBoundariesHandler _clickHandler
@@ -143,7 +144,7 @@
      style="position:fixed;width:@sideBarWidth;top:50px;bottom:0;border-right:@(_fullWidthSideBar ? "none" : "1px solid black");transition:width 0.2s;background:white;padding:@(_fullWidthSideBar ? "0" : "5px");overflow-x:hidden;z-index:10"
      @ref="_sideBarDiv"
      @onmouseover="SideBar_MouseHover" @onmouseout="SideBar_MouseLeave">
-    
+
     <!-- search box (when not shown in navbar) -->
     @if (ShowSearchBox)
     {
@@ -164,17 +165,7 @@
     <!-- side bar content -->
     @foreach (var element in _reader.GetSideBarElements())
     {
-        async Task ClickEvent(MouseEventArgs e)
-        {
-            element.OpenLink();
-            await SideBar_ElementClick();
-        }
-        <div class="" style="width:100%;min-width:200px;overflow:hidden">
-            <a class="btn" @onclick="ClickEvent" href="@element.LinkAddress">
-                <span class="oi oi-@element.Icon mr-2"></span>
-                <span style="opacity:@(_sideBarCollapsed?"0":"1");transition:opacity 0.2s">@element.Text</span>
-            </a>
-        </div>
+        <SideBarElementComponent Element="element" IsCollapsed="_sideBarCollapsed" ElementClicked="SideBar_ElementClick" />
     }
 </div>
 <div class="" style="height:1px;width:@sideBarWidths.collapsed;float:left">

@@ -13,13 +13,12 @@ namespace RaindropReader.Shared.Services.Client
     /// Scoped service that manages the state of the side bar component and
     /// the main view component.
     /// </summary>
-    public sealed class ReaderService
+    public sealed class ReaderService : IDisposable
     {
         private readonly IStorageProvider _storageProvider;
         private readonly INavigationHandler _navigationHandler;
         public PluginManager PluginManager { get; }
 
-        private readonly List<SideBarElement> _sideBarElements = new();
         private readonly List<ITab> _tabs = new();
 
         private ITab _selectedTab;
@@ -52,10 +51,14 @@ namespace RaindropReader.Shared.Services.Client
         {
             _navigationHandler = navigationHandler;
             _storageProvider = storageProvider;
-            InitSideBarElements();
             _tabs.Add(new ListTab(this));
             CheckSelectedTab();
             PluginManager = new(this);
+        }
+
+        public void Dispose()
+        {
+            PluginManager.Dispose();
         }
 
         /// <summary>
@@ -66,16 +69,19 @@ namespace RaindropReader.Shared.Services.Client
         /// <param name="createNew"></param>
         public async Task LoadStorageAsync(string userID, bool createNew)
         {
+            if (UserConfig is not null)
+            {
+                throw new InvalidOperationException("LoadStorageAsync can only be called once.");
+            }
             if (createNew)
             {
                 UserConfig = await _storageProvider.AddUserAsync(userID);
-                await PluginManager.InitUserAsync();
             }
             else
             {
                 UserConfig = await _storageProvider.GetUserAsync(userID);
-                await PluginManager.LoadAllPluginsAsync();
             }
+            await PluginManager.InitAsync();
         }
 
         /// <summary>
@@ -97,40 +103,27 @@ namespace RaindropReader.Shared.Services.Client
             await _navigationHandler.ClearBrowserUriAsync();
         }
 
-        private void InitSideBarElements()
-        {
-            _sideBarElements.Add(new SideBarElement
-            {
-                ReaderService = this,
-                NewTabGuid = "1",
-                Type = SideBarElementType.Normal,
-                Indent = 0,
-                Text = "favorite",
-                Icon = "heart",
-            });
-            _sideBarElements.Add(new SideBarElement
-            {
-                ReaderService = this,
-                NewTabGuid = "2",
-                Type = SideBarElementType.Normal,
-                Indent = 0,
-                Text = "test 1",
-                Icon = "rss",
-            });
-            _sideBarElements.Add(new SideBarElement
-            {
-                ReaderService = this,
-                NewTabGuid = "3",
-                Type = SideBarElementType.Normal,
-                Indent = 0,
-                Text = "test 2",
-                Icon = "rss",
-            });
-        }
-
         public IEnumerable<SideBarElement> GetSideBarElements()
         {
-            return _sideBarElements;
+            bool needSeparator = false;
+            foreach (var (_, plugin) in PluginManager.GetLoadedPluginsInternal())
+            {
+                bool hasElement = false;
+                foreach (var e in plugin.GetSideBarElements())
+                {
+                    if (needSeparator)
+                    {
+                        needSeparator = false;
+                        yield return new TestSideBarElement(this, SideBarElementType.Separator, null, null, null, null);
+                    }
+                    yield return e;
+                    hasElement = true;
+                }
+                if (hasElement)
+                {
+                    needSeparator = true;
+                }
+            }
         }
 
         private void CheckSelectedTab()

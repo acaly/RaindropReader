@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RaindropReader.Blazor", "Ra
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RaindropReader.Shared", "RaindropReader.Shared\RaindropReader.Shared.csproj", "{FC2850E8-5C26-48F5-9144-D624F6EEE94C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RaindropReader.Plugins", "RaindropReader.Plugins\RaindropReader.Plugins.csproj", "{1B463F70-491A-40F9-8D3A-D227D40816FD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RaindropReader.Plugins", "RaindropReader.Plugins\RaindropReader.Plugins.csproj", "{1B463F70-491A-40F9-8D3A-D227D40816FD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

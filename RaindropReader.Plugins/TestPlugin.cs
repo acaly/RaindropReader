@@ -14,8 +14,9 @@ namespace RaindropReader.Plugins
         {
         }
 
-        public void Load(PluginHandlerRegistry handlerRegistry)
+        public Task LoadAsync(PluginHandlerRegistry handlerRegistry)
         {
+            return Task.CompletedTask;
         }
     }
 }
