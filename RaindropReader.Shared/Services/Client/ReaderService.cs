@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RaindropReader.Shared.Services.Client
@@ -43,6 +44,18 @@ namespace RaindropReader.Shared.Services.Client
 
         public IUserConfig UserConfig { get; private set; }
 
+        //Assign the InvokeAsync of a component to allow the reader to dispatch
+        //background tasks.
+        public Func<Func<Task>, Task> DispatcherMethod { get; set; }
+        private readonly Timer _timer;
+        private readonly SemaphoreSlim _timerLock = new SemaphoreSlim(1);
+        public TimeSpan TimerInterval =
+#if DEBUG
+            TimeSpan.FromSeconds(5);
+#else
+            TimeSpan.FromMinutes(5);
+#endif
+
         /// <summary>
         /// DI constructor.
         /// </summary>
@@ -54,11 +67,31 @@ namespace RaindropReader.Shared.Services.Client
             _tabs.Add(new ListTab(this));
             CheckSelectedTab();
             PluginManager = new(this);
+            _timer = new Timer(state => RunScheduledTasksAsync().Wait(), null, TimerInterval, TimerInterval);
         }
 
         public void Dispose()
         {
+            _timer.Dispose();
             PluginManager.Dispose();
+        }
+
+        private async Task RunScheduledTasksAsync()
+        {
+            if (!_timerLock.Wait(0)) return;
+            try
+            {
+                var utcCheck = DateTime.UtcNow;
+                foreach (var (_, p) in PluginManager.GetLoadedPluginsInternal())
+                {
+                    //Run on component's sync context.
+                    await DispatcherMethod(() => p.RunScheduledTasks(utcCheck));
+                }
+            }
+            finally
+            {
+                _timerLock.Release();
+            }
         }
 
         /// <summary>

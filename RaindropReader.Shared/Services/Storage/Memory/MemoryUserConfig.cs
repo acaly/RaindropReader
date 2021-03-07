@@ -194,7 +194,10 @@ namespace RaindropReader.Shared.Services.Storage.Memory
                     i -= 1;
                 }
             }
-            receiveBuffer.RemoveRange(limit, receiveBuffer.Count - limit);
+            if (limit > 0 && receiveBuffer.Count > limit)
+            {
+                receiveBuffer.RemoveRange(limit, receiveBuffer.Count - limit);
+            }
 
             return receiveBuffer.Count;
         }

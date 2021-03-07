@@ -14,6 +14,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _readerService.DispatcherMethod = InvokeAsync;
         await _readerService.LoadStorageAsync(IStorageProvider.LocalUser, true);
         _readerService.PluginManager.AddPluginProvider(PluginProvider.Instance);
         await _readerService.PluginManager.AddPluginAsync("RaindropReader.Plugins.TestPlugin", "");

@@ -37,9 +37,9 @@ namespace RaindropReader.Shared.Components
         public abstract void OpenLink();
     }
 
-    internal sealed class TestSideBarElement : SideBarElement
+    internal class TestSideBarElement : SideBarElement
     {
-        private string _text, _icon, _linkAddress, _tabGuid;
+        protected string _text, _icon, _linkAddress, _tabGuid;
 
         public override string Text => _text;
         public override string Icon => _icon;
@@ -60,6 +60,11 @@ namespace RaindropReader.Shared.Components
         public override void OpenLink()
         {
             ReaderService.OpenTab(_tabGuid);
+        }
+
+        protected void RaiseElementChanged()
+        {
+            ElementChanged?.Invoke();
         }
     }
 }
