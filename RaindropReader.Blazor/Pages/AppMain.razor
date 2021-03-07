@@ -16,6 +16,7 @@
     {
         await _readerService.LoadStorageAsync(IStorageProvider.LocalUser, true);
         _readerService.PluginManager.AddPluginProvider(PluginProvider.Instance);
+        await _readerService.PluginManager.AddPluginAsync("RaindropReader.Plugins.TestPlugin", "");
         if (!string.IsNullOrWhiteSpace(Item))
         {
             _readerService.HandleItemRoute(Item);

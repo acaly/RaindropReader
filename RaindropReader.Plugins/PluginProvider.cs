@@ -20,7 +20,7 @@ namespace RaindropReader.Plugins
                 var attr = t.GetCustomAttribute<PluginAttribute>();
                 if (attr is not null)
                 {
-                    _pluginTypes.Add(attr.Name, t);
+                    _pluginTypes.Add(t.FullName, t);
                 }
             }
         }

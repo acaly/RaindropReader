@@ -145,7 +145,7 @@ namespace RaindropReader.Shared.Services.Plugins
             }
         }
 
-        public async Task<Guid> AddPlugin(string pluginName, string data)
+        public async Task<Guid> AddPluginAsync(string pluginName, string data)
         {
             var guid = Guid.NewGuid();
             var info = new UserPluginInstanceInfo
@@ -165,7 +165,7 @@ namespace RaindropReader.Shared.Services.Plugins
             return guid;
         }
 
-        public async Task RemovePlugin(Guid guid)
+        public async Task RemovePluginAsync(Guid guid)
         {
             var storage = _readerService.UserConfig.GetSystemStorage();
 
