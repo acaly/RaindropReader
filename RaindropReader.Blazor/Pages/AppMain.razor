@@ -1,7 +1,9 @@
-﻿@attribute [Route(Startup.AppRoute)]
-@attribute [Route(Startup.AppItemRoute)]
+﻿@using RaindropReader.Shared.Components
 @using RaindropReader.Shared.Services.Client
-@using RaindropReader.Shared.Components 
+@using RaindropReader.Shared.Services.Storage
+
+@attribute [Route(Startup.AppRoute)]
+@attribute [Route(Startup.AppItemRoute)]
 
 @inject ReaderService _readerService
 
@@ -9,8 +11,9 @@
     [Parameter]
     public string Item { get; set; }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        await _readerService.LoadStorageAsync(IStorageProvider.LocalUser, true);
         if (!string.IsNullOrWhiteSpace(Item))
         {
             _readerService.HandleItemRoute(Item);
@@ -23,7 +26,7 @@
         {
             return Task.CompletedTask;
         }
-        return _readerService.InitJsAsync();
+        return _readerService.InitJSAsync();
     }
 }
 

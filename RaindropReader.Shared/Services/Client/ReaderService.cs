@@ -1,4 +1,6 @@
 ﻿using RaindropReader.Shared.Components;
+using RaindropReader.Shared.Services.Plugins;
+using RaindropReader.Shared.Services.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +15,9 @@ namespace RaindropReader.Shared.Services.Client
     /// </summary>
     public sealed class ReaderService
     {
+        private readonly IStorageProvider _storageProvider;
         private readonly INavigationHandler _navigationHandler;
+        public PluginManager PluginManager { get; }
 
         private readonly List<SideBarElement> _sideBarElements = new();
         private readonly List<ITab> _tabs = new();
@@ -38,12 +42,40 @@ namespace RaindropReader.Shared.Services.Client
         public event Action UpdateTabHeader;
         public event Action UpdateTabContainer;
 
-        public ReaderService(INavigationHandler navigationHandler)
+        public IUserConfig UserConfig { get; private set; }
+
+        /// <summary>
+        /// DI constructor.
+        /// </summary>
+        /// <param name="navigationHandler"></param>
+        public ReaderService(INavigationHandler navigationHandler, IStorageProvider storageProvider)
         {
             _navigationHandler = navigationHandler;
+            _storageProvider = storageProvider;
             InitSideBarElements();
             _tabs.Add(new ListTab(this));
             CheckSelectedTab();
+            PluginManager = new(this);
+        }
+
+        /// <summary>
+        /// Use this method before any other methods when starting a new session, to
+        /// load the IUserConfig of the current user.
+        /// </summary>
+        /// <param name="userID"></param>
+        /// <param name="createNew"></param>
+        public async Task LoadStorageAsync(string userID, bool createNew)
+        {
+            if (createNew)
+            {
+                UserConfig = await _storageProvider.AddUserAsync(userID);
+                await PluginManager.InitUserAsync();
+            }
+            else
+            {
+                UserConfig = await _storageProvider.GetUserAsync(userID);
+                await PluginManager.LoadAllPluginsAsync();
+            }
         }
 
         /// <summary>
@@ -60,7 +92,7 @@ namespace RaindropReader.Shared.Services.Client
         /// Initialize the JsInterop lib. Must be called in the first AfterRender event.
         /// </summary>
         /// <returns></returns>
-        public async Task InitJsAsync()
+        public async Task InitJSAsync()
         {
             await _navigationHandler.ClearBrowserUriAsync();
         }

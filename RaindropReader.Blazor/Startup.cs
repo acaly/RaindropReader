@@ -8,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RaindropReader.Blazor.Services;
 using RaindropReader.Shared.Services.Client;
+using RaindropReader.Shared.Services.Storage;
+using RaindropReader.Shared.Services.Storage.Memory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,6 +38,7 @@ namespace RaindropReader.Blazor
             services.AddJsInteropExtensions();
 
             services.AddScoped<INavigationHandler, NavigationHandler>();
+            services.AddScoped<IStorageProvider, MemoryStorageProvider>();
             services.AddScoped<ReaderService>();
         }
 

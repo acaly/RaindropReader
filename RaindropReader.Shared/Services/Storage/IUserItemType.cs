@@ -11,7 +11,7 @@ namespace RaindropReader.Shared.Services.Storage
     /// immutable, but is shared and thread-safe. It always represents 
     /// the latest state of the type in the case of changing.
     /// </summary>
-    public interface IUserItemTypeInfo
+    public interface IUserItemType
     {
         /// <summary>
         /// The ItemGuid of the item that stores info of this type. This
@@ -26,10 +26,9 @@ namespace RaindropReader.Shared.Services.Storage
         Guid StorageGuid { get; }
 
         /// <summary>
-        /// Readable name of the type. Usually set by user. Modification
-        /// requires modification lock on type storage.
+        /// The data of this type, including its name.
         /// </summary>
-        string DisplayName { get; set; }
+        UserItemTypeInfo Info { get; }
 
         /// <summary>
         /// Returns whether this type is valid, that is, has not been deleted.

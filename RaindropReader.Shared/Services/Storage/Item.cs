@@ -12,13 +12,20 @@ namespace RaindropReader.Shared.Services.Storage
     /// </summary>
     public sealed class Item
     {
-        public Item(Guid itemGuid, Guid versionGuid, DateTime timestamp, IUserItemTypeInfo type, byte[] data)
+        public Item(IUserItemType type, Guid itemGuid, byte[] byteData,
+            Guid? versionGuid = null, DateTime? timestamp = null)
         {
             ItemGuid = itemGuid;
-            VersionGuid = versionGuid;
-            Timestamp = timestamp;
+            VersionGuid = versionGuid ?? Guid.NewGuid();
+            Timestamp = timestamp ?? DateTime.UtcNow;
             ItemType = type;
-            _data = data;
+            _data = byteData;
+        }
+
+        public Item(IUserItemType type, Guid itemGuid, object data,
+            Guid? versionGuid = null, DateTime? timestamp = null)
+            : this(type, itemGuid, data == null ? null : ItemDataHelper.ToItemData(data), versionGuid, timestamp)
+        {
         }
 
         /// <summary>
@@ -39,7 +46,7 @@ namespace RaindropReader.Shared.Services.Storage
         /// <summary>
         /// The type of this item.
         /// </summary>
-        public IUserItemTypeInfo ItemType { get; }
+        public IUserItemType ItemType { get; }
 
         private readonly byte[] _data;
 

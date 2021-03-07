@@ -8,8 +8,10 @@ namespace RaindropReader.Shared.Services.Storage
 {
     /// <summary>
     /// The service that provides storage of feed data. This class is not shared
-    /// between users. The instances of this class are managed by the IUserConfigStorage
-    /// and are automatically disposed by the end of the session.
+    /// between users. The instances of this class are managed by the IUserConfig
+    /// or plugins and are automatically disposed by the end of the session.
+    /// When multiple sessions are opened for the same user, this class should 
+    /// handle synchronization and avoid data racing between different instances.
     /// </summary>
     public interface IUserDataStorage
     {
@@ -41,16 +43,6 @@ namespace RaindropReader.Shared.Services.Storage
         Task<Item> GetItemFromVersionGuidAsync(Guid versionGuid);
 
         /// <summary>
-        /// Check whether the item is currently the latest version. Return the same instance
-        /// if so. Create a new instance of Item if not. Return empty Item for deleted items.
-        /// Return null if the Guid is not found.
-        /// </summary>
-        /// <param name="item">The existing item.</param>
-        /// <returns>The latest version of the specified item.</returns>
-        Item GetLatestVersion(Item item);
-        Task<Item> GetLatestVersionAsync(Item item);
-
-        /// <summary>
         /// Get the collection of items of the specified type, filtered by timestamp, limited
         /// by the specified max number.
         /// </summary>
@@ -61,8 +53,8 @@ namespace RaindropReader.Shared.Services.Storage
         /// The List object to receive the results. It will be cleared first. Can be null to get number.
         /// </param>
         /// <returns>The actual number added to the list.</returns>
-        int GetItems(IUserItemTypeInfo type, DateTime fromTime, int limit, List<Item> receiveBuffer);
-        Task<int> GetItemsAsync(IUserItemTypeInfo type, DateTime fromTime, int limit, List<Item> receiveBuffer);
+        int GetItems(IUserItemType type, DateTime fromTime, int limit, List<Item> receiveBuffer);
+        Task<int> GetItemsAsync(IUserItemType type, DateTime fromTime, int limit, List<Item> receiveBuffer);
 
         /// <summary>
         /// Lock the storage for writing. Other writers from the local and remote 
