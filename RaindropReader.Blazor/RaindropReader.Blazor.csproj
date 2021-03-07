@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\RaindropReader.Plugins\RaindropReader.Plugins.csproj" />
     <ProjectReference Include="..\RaindropReader.Shared\RaindropReader.Shared.csproj" />
   </ItemGroup>
 
